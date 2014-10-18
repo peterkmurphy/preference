@@ -1,0 +1,262 @@
+ElectionClasses.hs:184:12: Warning: Reduce duplication
+Found:
+  ourtransballotcount = countlengths ourtransballots
+  ourlatestballots
+    = combtransandorigpiles ourstartballotpile ourtransballots nocand
+        exclindex
+  ourlatestballotcount = countlengths ourlatestballots
+Why not:
+  Combine with ElectionClasses.hs:229:12
+
+ElectionClasses.hs:189:21: Error: Redundant if
+Found:
+  if iswonyet ourelection then True else
+    iswinningproportion ourpercentcount
+Why not:
+  iswonyet ourelection || iswinningproportion ourpercentcount
+
+ElectionClasses.hs:192:39: Error: Redundant if
+Found:
+  if length highestpositions == 1 then
+    ourcands !! (head highestpositions) else
+    if
+      firstballots ourelection !! (head highestpositions) >
+        firstballots ourelection !! (highestpositions !! 1)
+      then ourcands !! (head highestpositions) else
+      ourcands !! (highestpositions !! 1)
+Why not:
+  (if
+     (length highestpositions == 1) ||
+       (firstballots ourelection !! (head highestpositions) >
+          firstballots ourelection !! (highestpositions !! 1))
+     then ourcands !! (head highestpositions) else
+     ourcands !! (highestpositions !! 1))
+
+ElectionClasses.hs:193:43: Warning: Redundant bracket
+Found:
+  ourcands !! (head highestpositions)
+Why not:
+  ourcands !! head highestpositions
+
+ElectionClasses.hs:194:43: Error: Too strict if
+Found:
+  if
+    firstballots ourelection !! (head highestpositions) >
+      firstballots ourelection !! (highestpositions !! 1)
+    then ourcands !! (head highestpositions) else
+    ourcands !! (highestpositions !! 1)
+Why not:
+  (!!) ourcands
+    (if
+       firstballots ourelection !! (head highestpositions) >
+         firstballots ourelection !! (highestpositions !! 1)
+       then head highestpositions else highestpositions !! 1)
+Note: increases laziness
+
+ElectionClasses.hs:194:46: Warning: Redundant bracket
+Found:
+  firstballots ourelection !! (head highestpositions)
+Why not:
+  firstballots ourelection !! head highestpositions
+
+ElectionClasses.hs:195:47: Warning: Redundant bracket
+Found:
+  ourcands !! (head highestpositions)
+Why not:
+  ourcands !! head highestpositions
+
+ElectionClasses.hs:234:21: Error: Redundant if
+Found:
+  if haswonyet thelastround then True else
+    iswinningproportion ourlatestpercentcount
+Why not:
+  haswonyet thelastround || iswinningproportion ourlatestpercentcount
+
+ElectionClasses.hs:237:39: Error: Too strict if
+Found:
+  if length highestpositions == 1 then
+    ourcands !! (head highestpositions) else
+    ourcands !! (getwinners thelastround highestpositions (n - 1))
+Why not:
+  (!!) ourcands
+    (if length highestpositions == 1 then head highestpositions else
+       getwinners thelastround highestpositions (n - 1))
+Note: increases laziness
+
+ElectionClasses.hs:238:43: Warning: Redundant bracket
+Found:
+  ourcands !! (head highestpositions)
+Why not:
+  ourcands !! head highestpositions
+
+ElectionClasses.hs:239:43: Warning: Redundant bracket
+Found:
+  ourcands !! (getwinners thelastround highestpositions (n - 1))
+Why not:
+  ourcands !! getwinners thelastround highestpositions (n - 1)
+
+ElectionClasses.hs:257:7: Error: Use isJust
+Found:
+  not (isNothing ourelection)
+Why not:
+  isJust ourelection
+
+ElectionClasses.hs:259:7: Error: Use isJust
+Found:
+  not (isNothing ourelection)
+Why not:
+  isJust ourelection
+
+ElectionClasses.hs:311:7: Error: Use isJust
+Found:
+  not (isNothing eresults1)
+Why not:
+  isJust eresults1
+
+ElectionClasses.hs:311:36: Error: Use isJust
+Found:
+  not (isNothing eresults2)
+Why not:
+  isJust eresults2
+
+ElectionClasses.hs:312:7: Warning: Redundant bracket
+Found:
+  (pseudoequalelection (thiselection arg1) (thiselection arg2)) &&
+    length (thisrounds arg1) == length (thisrounds arg2) &&
+      all (\ x -> thisrounds arg1 !! x == thisrounds arg2 !! x)
+        [0 .. deslength]
+Why not:
+  pseudoequalelection (thiselection arg1) (thiselection arg2) &&
+    length (thisrounds arg1) == length (thisrounds arg2) &&
+      all (\ x -> thisrounds arg1 !! x == thisrounds arg2 !! x)
+        [0 .. deslength]
+
+Main.hs:1:1: Error: Unused LANGUAGE pragma
+Found:
+  {-# LANGUAGE CPP, TemplateHaskell #-}
+Why not:
+  {-# LANGUAGE CPP #-}
+
+PrefSeqUtil.hs:18:51: Warning: Use infix
+Found:
+  notElem i excludepos
+Why not:
+  i `notElem` excludepos
+
+PrefSeqUtil.hs:49:43: Warning: Use infix
+Found:
+  notElem i excludepos
+Why not:
+  i `notElem` excludepos
+
+PrefSeqUtil.hs:66:1: Error: Eta reduce
+Found:
+  iswinningproportion seqval
+    = any (\ k -> k >= fromIntegral 1 / fromIntegral 2) seqval
+Why not:
+  iswinningproportion
+    = any (\ k -> k >= fromIntegral 1 / fromIntegral 2)
+
+PrefSeqUtil.hs:66:46: Error: Redundant fromIntegral
+Found:
+  fromIntegral 1
+Why not:
+  1
+
+PrefSeqUtil.hs:66:63: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:73:71: Warning: Use infix
+Found:
+  elem i initialposns
+Why not:
+  i `elem` initialposns
+
+PrefSeqUtil.hs:84:71: Warning: Use infix
+Found:
+  elem i initialposns
+Why not:
+  i `elem` initialposns
+
+PrefSeqUtil.hs:200:49: Error: Redundant fromIntegral
+Found:
+  fromIntegral 1
+Why not:
+  1
+
+PrefSeqUtil.hs:200:66: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:201:49: Error: Redundant fromIntegral
+Found:
+  fromIntegral 1
+Why not:
+  1
+
+PrefSeqUtil.hs:201:66: Error: Redundant fromIntegral
+Found:
+  fromIntegral 3
+Why not:
+  3
+
+PrefSeqUtil.hs:202:52: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:202:69: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:203:5: Error: Redundant fromIntegral
+Found:
+  fromIntegral 3
+Why not:
+  3
+
+PrefSeqUtil.hs:203:22: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:204:52: Error: Redundant fromIntegral
+Found:
+  fromIntegral 2
+Why not:
+  2
+
+PrefSeqUtil.hs:204:69: Error: Redundant fromIntegral
+Found:
+  fromIntegral 3
+Why not:
+  3
+
+PrefSeqUtil.hs:205:5: Error: Redundant fromIntegral
+Found:
+  fromIntegral 3
+Why not:
+  3
+
+PrefSeqUtil.hs:205:22: Error: Redundant fromIntegral
+Found:
+  fromIntegral 3
+Why not:
+  3
+
+PrefStringUtil.hs:40:7: Warning: Use infix
+Found:
+  elem Nothing result
+Why not:
+  Nothing `elem` result
+
+37 suggestions

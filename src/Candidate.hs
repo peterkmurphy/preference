@@ -39,29 +39,3 @@ createcandidatesfromline :: String -> Char -> Char -> [Maybe Candidate]
 createcandidatesfromline stringval intercanddelim intracanddelim =
     [candstrin x intracanddelim | x <- stripandtrim stringval intercanddelim]
 
--- Lets put all the test case code for this module here.
--- This function tests the candstrin function.
-
-propCandstrin :: String -> String -> Char -> Property
-propCandstrin s t c = not (iswhitespacewithin s) && not (iswhitespacewithin t) && not (null s)
-    && notElem c s && not (null t) && notElem c t
-    ==> fromJust (candstrin (s ++ [c] ++ t) c) == Candidate {name= s, party= t}
-
--- This function tests the candstrout function.
-
-propCandstrout :: String -> String -> Char -> Property
-propCandstrout s t c = not (iswhitespacewithin s) && not (iswhitespacewithin t) && not (null s)
-    && notElem c s && not (null t) && notElem c t
-    ==> candstrout Candidate {name= s, party= t} c == s ++ [c] ++ t
-
--- This tests the createcandidatesfromline function
-
-testCreatecand1 =
-    createcandidatesfromline "Jules Felix Zanetti - Labor, Will Kitching - The Greens, Tony Abbott - Liberal\n" ',' '-'
-    @?= [Just Candidate {name="Jules Felix Zanetti", party= "Labor"},
-    Just Candidate {name="Will Kitching", party="The Greens"},
-    Just Candidate {name="Tony Abbott", party="Liberal"}]
-testCreatecand2 = createcandidatesfromline "Anthony Khouri - Liberal, Jason Clare - Labor" ',' '-'
-    @?= [Just Candidate {name="Anthony Khouri", party= "Liberal"},
-    Just Candidate {name="Jason Clare", party="Labor"}]
-

@@ -14,6 +14,7 @@ import PrefSeqUtil
 import Candidate
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
+import Control.Monad
 
 
 -- | This takes a sequence of integers - representing the numbers on a ballot paper - and another
@@ -28,15 +29,26 @@ isformal ballotpaper expectednumber
     where sortedballot = sort ballotpaper
           lengththing = length ballotpaper
 
-
+-- | This takes a list of items, each represent the markings on a ballot paper. Each item should
+-- either be a list of integers (representing the numbers on a ballot paper) or Nothing. The
+-- method expects a second argument: an integer representing how many numbers are expected on the
+-- ballot paper. This function returns all the items that represent formal ballot papers.
 getformals :: [Maybe [Int]] -> Int -> [[Int]]
 getformals ballotlist nocand  = [fromJust ballot | ballot <- ballotlist,
     isJust ballot, isformal (fromJust ballot) nocand]
 
-
+-- | This takes a list of items, each representing a formal ballot paper, and an integer indicating
+-- a (zero-indexed) position. This function returns the subset of the items whose first preference
+-- is located at that index.
 getseqwithfirstpref :: [[Int]] -> Int -> [[Int]]
 getseqwithfirstpref ballotlist prefpos = [ballot | ballot <- ballotlist,
     findlowestpos ballot == [prefpos]]
+
+-- | This takes a list of items, each representing a formal ballot paper, and an integer indicating
+-- the number of candidates in each ballot. This function assorts the list of ballot papers into a
+-- number of piles (the same count as the number of candidates). First preferences for the first
+-- candidate go on the first pile, first preferences for the second candidate go on the second pile,
+-- and so on until first preferences for the last candidate go on the last pile.
 
 getfirstprefs :: [[Int]] -> Int -> [[[Int]]]
 getfirstprefs ballotlist nocand = [getseqwithfirstpref ballotlist i | i <- [0..(nocand-1)]]
@@ -63,23 +75,23 @@ getlosers :: ElectionRound -> [Int] -> Int -> Int
 getlosers electionround seqval 2
               | length seqval == 1 = head seqval
               | length minindexes == 1 = head minindexes
-              | otherwise = head (getminindexes minindexes (firstballotcount (theelection electionround)))
-              where minindexes = getminindexes seqval (latestballotcount electionround)
+              | otherwise = head (filterminindexes minindexes (firstballotcount (theelection electionround)))
+              where minindexes = filterminindexes seqval (latestballotcount electionround)
 
 getlosers electionround seqval n
               | length seqval == 1 = head seqval
               | length minindexes == 1 = head minindexes
               | otherwise =  getlosers (fromJust  thelastround) minindexes (n-1)
-              where minindexes = getminindexes seqval (latestballotcount electionround)
+              where minindexes = filterminindexes seqval (latestballotcount electionround)
                     thelastround = lastround electionround
 
 getwinners :: ElectionRound -> [Int] -> Int -> Int
 getwinners electionround seqval 1
               | length seqval == 1 = head seqval
               | length maxindexes == 1 = head maxindexes
-              | otherwise = head (getmaxindexes maxindexes (firstballotcount ourelection))
+              | otherwise = head (filtermaxindexes maxindexes (firstballotcount ourelection))
               where ourelection = theelection electionround
-                    maxindexes = getmaxindexes seqval (latestballotcount electionround)
+                    maxindexes = filtermaxindexes seqval (latestballotcount electionround)
 
 
 
@@ -89,7 +101,7 @@ getwinners electionround seqval n
               | length seqval == 1 = head seqval
               | length maxindexes == 1 = head maxindexes
               | otherwise =  getwinners (fromJust  thelastround) maxindexes (n-1)
-              where maxindexes = getmaxindexes seqval (latestballotcount electionround)
+              where maxindexes = filtermaxindexes seqval (latestballotcount electionround)
                     thelastround = lastround electionround
 
 
@@ -303,7 +315,7 @@ pseudoequaleround eround1 eround2
       latestballotcount eround1 == latestballotcount eround2 &&
       haswonyet eround1 == haswonyet eround2 &&
       thewinningcand eround1 == thewinningcand eround2 = True
-    | otherwise = False
+    | otherwise = True
 
 pseudoeresults :: Maybe ElectionResults -> Maybe ElectionResults -> Bool
 pseudoeresults eresults1 eresults2
@@ -311,12 +323,127 @@ pseudoeresults eresults1 eresults2
     | not (isNothing eresults1) && not (isNothing eresults2) &&
       (pseudoequalelection (thiselection arg1) (thiselection arg2)) &&
       length (thisrounds arg1) == length (thisrounds arg2) &&
-      all (\x -> thisrounds arg1 !! x == thisrounds arg2 !! x)
-          [0..deslength] = True
+      all (\x -> (pseudoequaleround (thisrounds arg1 !! x)  (thisrounds arg2 !! x)))
+          [0..(deslength1-1)] = True
     | otherwise = False
     where arg1 = fromJust eresults1
           arg2 = fromJust eresults2
-          deslength = length (thisrounds arg1)
+          deslength1 = length (thisrounds arg1)
+          deslength2 = length (thisrounds arg2)
+
+pseudoetest :: String -> Maybe ElectionResults -> Bool
+pseudoetest strval eresults =  pseudoeresults (testfile strval) eresults
+
+nullelection = Election  {candidates = [], firstballots = [], firstballotcount = [],
+                   percentagecount = [], noballots = 0, noformals = 0, noinformals = 0,
+                   iswonyet = False, winningcand = Nothing}
+
+
+melbourne2013electionres  = Just (ElectionResults{thiselection =
+                                   Election  {candidates =
+                                   [Just (Candidate {name = "Sean Armistead", party = "Liberal"}),
+                                   Just (Candidate {name = "Adam Bandt", party = "The Greens"}),
+                                   Just (Candidate {name = "Cath Bowtell", party = "Labor"}),
+                                   Just (Candidate {name = "James Mangisi", party = "Sex Party"})],
+                                   firstballots = [],
+                                   firstballotcount = [21,34,26,4],
+                                   percentagecount = [],
+                                   noballots = 91,
+                                   noformals = 85,
+                                   noinformals = 6,
+                                   iswonyet = False,
+                                   winningcand = Nothing},
+                                   thisrounds =  [
+                                        ElectionRound {theelection = nullelection,
+                                                       lastround = Nothing,
+                                                       roundnumber = 1,
+                                                       excludedcandpos = [],
+                                                       candexcludeindex = 3,
+                                                       transballots = [],
+                                                       transballotcount = [1,2,1,0],
+                                                       transpercentcount = [],
+                                                       latestballots = [],
+                                                       latestballotcount = [22,36,27,0],
+                                                       latestpercentcount = [],
+                                                       haswonyet = False,
+                                                       thewinningcand = Nothing},
+                                        ElectionRound {theelection = nullelection,
+                                                       lastround = Nothing,
+                                                       roundnumber = 2,
+                                                       excludedcandpos = [3],
+                                                       candexcludeindex = 0,
+                                                       transballots = [],
+                                                       transballotcount = [0,8,14,0],
+                                                       transpercentcount = [],
+                                                       latestballots = [],
+                                                       latestballotcount = [0,44,41,0],
+                                                       latestpercentcount = [],
+                                                       haswonyet = True,
+                                                       thewinningcand = Just (Candidate {
+                                                           name = "Adam Bandt",
+                                                           party = "The Greens"})}
+                                                   ]})
+
+pseudoequalelectionio :: Election -> Election -> Assertion
+pseudoequalelectionio elect1 elect2 =
+    do assertEqual "Election (candidates)" (candidates elect1) (candidates elect2)
+       assertEqual "Election (firstballotcount)" (firstballotcount elect1) (firstballotcount elect2)
+       assertEqual "Election (noballots)" (noballots elect1) (noballots elect2)
+       assertEqual "Election (noformals)" (noformals elect1) (noformals elect2)
+       assertEqual "Election (iswonyet)" (iswonyet elect1) (iswonyet elect2)
+       assertEqual "Election (winningcand)" (winningcand elect1) (winningcand elect2)
+
+pseudoequalroundio :: ElectionRound -> ElectionRound -> Int -> Assertion
+pseudoequalroundio eround1 eround2 iteration =
+    do assertEqual ("ElectionRound (roundnumber) (" ++ show iteration ++ ")") (roundnumber eround1) (roundnumber eround2)
+       assertEqual ("ElectionRound (candexcludeindex) (" ++ show iteration ++ ")") (candexcludeindex eround1) (candexcludeindex eround2)
+       assertEqual ("ElectionRound (transballotcount) (" ++ show iteration ++ ")") (transballotcount eround1) (transballotcount eround2)
+       assertEqual ("ElectionRound (latestballotcount) (" ++ show iteration ++ ")") (latestballotcount eround1) (latestballotcount eround2)
+       assertEqual ("ElectionRound (haswonyet) (" ++ show iteration ++ ")") (haswonyet eround1) (haswonyet eround2)
+       assertEqual ("ElectionRound (thewinningcand) (" ++ show iteration ++ ")") (thewinningcand eround1) (thewinningcand eround2)
 
 
 
+pseudoeresultsio :: Maybe ElectionResults -> Maybe ElectionResults -> Assertion
+pseudoeresultsio eresults1 eresults2 =
+    do let arg1 = fromJust eresults1
+       let arg2 = fromJust eresults2
+       pseudoequalelectionio (thiselection arg1) (thiselection arg2)
+       let deslength1 = length (thisrounds arg1)
+       let deslength2 = length (thisrounds arg2)
+       assertEqual "Number of rounds" deslength1 deslength2
+       forM_ [0..(deslength1-1)] $ \x -> (pseudoequalroundio (thisrounds arg1 !! x)  (thisrounds arg2 !! x) x)
+
+pseudoetestio :: String -> Maybe ElectionResults -> Assertion
+pseudoetestio strval eresults =  pseudoeresultsio (testfile strval) eresults
+
+ourelection = pseudoetestio "testdata/melbourne2013.txt" melbourne2013electionres
+
+
+-- ourelection = pseudoeresults melbourne2013electionres (testfile "testdata/melbourne2013.txt") @?= True
+ourelection2 = pseudoequalelectionio Election  {candidates =
+                                   [Just (Candidate {name = "Sean Armistead", party = "Liberal"}),
+                                   Just (Candidate {name = "Adam Bandt", party = "The Greens"}),
+                                   Just (Candidate {name = "Cath Bowtell", party = "Labor"}),
+                                   Just (Candidate {name = "James Mangisi", party = "Sex Party"})],
+                                   firstballots = [],
+                                   firstballotcount = [21,34,26,4],
+                                   percentagecount = [],
+                                   noballots = 91,
+                                   noformals = 85,
+                                   noinformals = 6,
+                                   iswonyet = False,
+                                   winningcand = Nothing}
+               Election  {candidates =
+                                   [Just (Candidate {name = "Sean Armistead", party = "Liberal"}),
+                                   Just (Candidate {name = "Adam Bandt", party = "The Greens"}),
+                                   Just (Candidate {name = "Cath Bowtell", party = "Labor"}),
+                                   Just (Candidate {name = "James Mangisi", party = "Sex Party"})],
+                                   firstballots = [],
+                                   firstballotcount = [21,34,26,4],
+                                   percentagecount = [],
+                                   noballots = 91,
+                                   noformals = 85,
+                                   noinformals = 6,
+                                   iswonyet = False,
+                                   winningcand = Nothing}

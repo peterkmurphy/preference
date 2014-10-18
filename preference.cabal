@@ -7,24 +7,27 @@ license-file: ""
 synopsis: Testing Preferential voting
 description: Fill in later
 data-dir: ""
-
-Library
-    Build-depends: split
-    Build-depends: text
-    Build-depends: HUnit,
-                   test-framework,
-                   test-framework-hunit,
-                   test-framework-quickcheck2
-
-
+ 
+library
+    build-depends: HUnit -any, QuickCheck -any, base -any, split -any,
+                   test-framework -any, test-framework-hunit -any,
+                   test-framework-quickcheck2 -any, text -any
+    exposed: True
+    buildable: True
+    hs-source-dirs: .
+ 
 executable preference
-    build-depends: QuickCheck -any, base -any
+    build-depends: HUnit -any, QuickCheck -any, base -any, split -any,
+                   test-framework -any, test-framework-hunit -any,
+                   test-framework-quickcheck2 -any, text -any
     main-is: Main.hs
     buildable: True
     hs-source-dirs: src
-
+ 
 test-suite test-preference
-    build-depends: QuickCheck -any, base -any
+    build-depends: HUnit -any, QuickCheck -any, base -any, split -any,
+                   test-framework -any, test-framework-hunit -any,
+                   test-framework-quickcheck2 -any, text -any
     type: exitcode-stdio-1.0
     main-is: Main.hs
     buildable: True

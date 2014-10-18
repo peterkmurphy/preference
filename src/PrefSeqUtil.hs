@@ -1,12 +1,6 @@
 module PrefSeqUtil where
 
 import Data.List
-import Test.QuickCheck
-import Test.QuickCheck.All (quickCheckAll)
-import Test.Framework
-import Test.Framework.Providers.QuickCheck2
-import Test.Framework.Providers.HUnit
-import Test.HUnit
 import Data.Maybe
 
 -- | This method takes a sequence and a list of indices to exclude. It returns another
@@ -63,73 +57,25 @@ getproportions seqofints total =
 
 -- | This method checks if there is a "winning" proportion - one equal to or exceeding 50%.
 iswinningproportion :: [Double] -> Bool
-iswinningproportion seqval = any (\k -> k >= fromIntegral 1 / fromIntegral 2) seqval
+iswinningproportion seqval = any (\k -> k >= 1 / 2) seqval
 
-getminindexes :: [Int] -> [Int] -> [Int]
-getminindexes startpos seqtocheck = [i | i <- [0..(nocand-1)], elem i startpos, seqtocheck !! i == minvalue]
+-- | This method starts with a initial sequence of positions to check in a sequence. Having found
+-- the minimum value for all positions checked in the sequence, the method returns a sequence of
+-- those positions corresponding to the minimum. (This method filters the initial sequence of
+-- minimums, but does not add extra indices in the process).
+filterminindexes :: [Int] -> [Int] -> [Int]
+filterminindexes initialposns seqtocheck = [i | i <- [0..(nocand-1)], elem i initialposns,
+    seqtocheck !! i == minvalue]
     where nocand = length seqtocheck
-          minvalue = minimum [seqtocheck !! j | j <- startpos]
+          minvalue = minimum [seqtocheck !! j | j <- initialposns `intersect` [0..(nocand-1)]]
 
-getmaxindexes :: [Int] -> [Int] -> [Int]
-getmaxindexes startpos seqtocheck = [i | i <- [0..(nocand-1)], elem i startpos, seqtocheck !! i == maxvalue]
+-- | This method starts with a initial sequence of positions to check in a sequence. Having found
+-- the maximum value for all positions checked in the sequence, the method returns a sequence of
+-- those positions corresponding to the maximum. (This method filters the initial sequence of
+-- maximums, but does not add extra indices in the process).
+filtermaxindexes :: [Int] -> [Int] -> [Int]
+filtermaxindexes initialposns seqtocheck = [i | i <- [0..(nocand-1)], elem i initialposns,
+    seqtocheck !! i == maxvalue]
     where nocand = length seqtocheck
-          maxvalue = maximum [seqtocheck !! j | j <- startpos]
-
-
-
-
-
-
--- This function tests the findhighestpos function
-
-testFindhighestpos1 = findhighestpos [] @?= []
-testFindhighestpos2 = findhighestpos [0] @?= [0]
-testFindhighestpos3 = findhighestpos [0,0] @?= [0,1]
-testFindhighestpos4 = findhighestpos [0,1] @?= [1]
-testFindhighestpos5 = findhighestpos [1,0] @?= [0]
-testFindhighestpos6 = findhighestpos [1,1] @?= [0,1]
-
--- This function tests the findlasthighestpos function
-
-testFindlasthighestpos2 = findlasthighestpos [0] @?= 0
-testFindlasthighestpos3 = findlasthighestpos [0,0] @?= 1
-testFindlasthighestpos4 = findlasthighestpos [0,1] @?= 1
-testFindlasthighestpos5 = findlasthighestpos [1,0] @?= 0
-testFindlasthighestpos6 = findlasthighestpos [1,1] @?= 1
-
--- This function tests the findlowestpos function
-
-testFindlowestpos1 = findlowestpos [] @?= []
-testFindlowestpos2 = findlowestpos [0] @?= [0]
-testFindlowestpos3 = findlowestpos [0,0] @?= [0,1]
-testFindlowestpos4 = findlowestpos [0,1] @?= [0]
-testFindlowestpos5 = findlowestpos [1,0] @?= [1]
-testFindlowestpos6 = findlowestpos [1,1] @?= [0,1]
-
--- This function tests the findfirstlowestpos function
-
-testFindfirstlowestpos2 = findfirstlowestpos [0] @?= 0
-testFindfirstlowestpos3 = findfirstlowestpos [0,0] @?= 0
-testFindfirstlowestpos4 = findfirstlowestpos [0,1] @?= 0
-testFindfirstlowestpos5 = findfirstlowestpos [1,0] @?= 1
-testFindfirstlowestpos6 = findfirstlowestpos [1,1] @?= 0
-
--- This function tests the countlengths function
-
-testCountlengths1 = countlengths [] @?= []
-testCountlengths2 = countlengths [[]] @?= [0]
-testCountlengths3 = countlengths [[1]] @?= [1]
-testCountlengths4 = countlengths [[[1]], [[2]]] @?= [1, 1]
-testCountlengths5 = countlengths [[1, 2], [1]] @?= [2, 1]
-
--- This function tests the getproportions method
-
-testGetproportions1 = getproportions [] 2 @?= []
-testGetproportions2 = getproportions [] 3 @?= []
-testGetproportions3 = getproportions [1] 2 @?= [fromIntegral 1 / fromIntegral 2]
-testGetproportions4 = getproportions [1] 3 @?= [fromIntegral 1 / fromIntegral 3]
-testGetproportions5 = getproportions [2, 3] 2 @?= [fromIntegral 2 / fromIntegral 2,
-    fromIntegral 3 / fromIntegral 2]
-testGetproportions6 = getproportions [2, 3] 3 @?= [fromIntegral 2 / fromIntegral 3,
-    fromIntegral 3 / fromIntegral 3]
+          maxvalue = maximum [seqtocheck !! j | j <- initialposns `intersect` [0..(nocand-1)]]
 
